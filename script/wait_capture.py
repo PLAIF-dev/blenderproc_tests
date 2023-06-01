@@ -45,7 +45,7 @@ def get_and_set_camera():
 
 bproc.init()
 set_light(get_light())
-obj = bproc.loader.load_obj('002_master_chef_can_ycb/textured.obj')[0]
+obj = bproc.loader.load_obj('/home/yhpark/catkin_ws/src/blenderproc_tests/script/002_master_chef_can_ycb/textured.obj')[0]
 
 get_and_set_camera()
 rendered_data = bproc.renderer.render()
@@ -55,23 +55,6 @@ color = rendered_data["colors"][0]
 color[..., :3] = color[..., :3][..., ::-1].astype(np.uint8)
 
 # save or send
-cv2.imwrite('result.png',color)
+cv2.imwrite('/home/yhpark/catkin_ws/src/blenderproc_tests/script/result.png',color)
 
 bproc.utility.reset_keyframes()
-
-# while (True):
-#     obj = bproc.loader.load_obj(obj_path)
-#     obj = obj[0]
-
-#     if interrupt == True:
-#         get_and_set_camera()
-#         rendered_data = bproc.renderer.render()
-#         color = rendered_data["colors"][0]
-
-#         # rgb tp bgr
-#         color[..., :3] = color[..., :3][..., ::-1].astype(np.uint8)
-
-#         # save or send
-#         cv2.imwrite('result.png',color)
-
-#         bproc.utility.reset_keyframes()
