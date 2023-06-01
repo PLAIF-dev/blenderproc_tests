@@ -45,7 +45,13 @@ def get_and_set_camera():
 
 bproc.init()
 set_light(get_light())
-obj = bproc.loader.load_obj('/home/yhpark/catkin_ws/src/blenderproc_tests/script/002_master_chef_can_ycb/textured.obj')[0]
+
+obj_list = ['/home/yhpark/catkin_ws/src/blenderproc_tests/script/002_master_chef_can_ycb/textured.obj',
+            '/home/yhpark/catkin_ws/src/blenderproc_tests/script/003_cracker_box_ycb/textured.obj',
+            '/home/yhpark/catkin_ws/src/blenderproc_tests/script/006_mustard_bottle_ycb/textured.obj',
+            '/home/yhpark/catkin_ws/src/blenderproc_tests/script/008_pudding_box_ycb/textured.obj',
+            '/home/yhpark/catkin_ws/src/blenderproc_tests/script/009_gelatin_box_ycb/textured.obj']
+obj = bproc.loader.load_obj(random.choice(obj_list))
 
 get_and_set_camera()
 rendered_data = bproc.renderer.render()
