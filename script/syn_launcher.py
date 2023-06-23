@@ -28,26 +28,26 @@ def rgb_to_msg(img):
 
     return ros_msg
 
-class Blenderproc_tests():
+class Synthetic_rospkg():
     def __init__(self):
-        rospy.init_node('Blenderproc_tests_node')
+        rospy.init_node('Synthetic_rospkg_node')
         rospy.Subscriber('create_new_image', String, self.callback_create)
-        rospy.loginfo('[Blenderproc_tests_node] started')
+        rospy.loginfo('[Synthetic_rospkg_node] started')
         try:
             rospy.spin()
         except:
-            rospy.signal_shutdown('Blenderproc_tests_node is shutdown')
+            rospy.signal_shutdown('Synthetic_rospkg_node is shutdown')
 
 
     def callback_create(self, msg):
-        rospy.loginfo('[Blenderproc_tests_node] callback_create called')
-        cmd = "blenderproc run /home/yhpark/catkin_ws/src/blenderproc_tests/script/wait_capture.py"
+        rospy.loginfo('[Synthetic_rospkg_node] callback_create called')
+        cmd = "blenderproc run /home/yhpark/catkin_ws/src/synthetic_rospkg/script/wait_capture.py"
         returned_value = os.system(cmd)  # returns the exit code in unix
         print('returned value:', returned_value)
         self.send_image()
 
     def send_image(self):
-        img_path = '/home/yhpark/catkin_ws/src/blenderproc_tests/script/result.png'
+        img_path = '/home/yhpark/catkin_ws/src/synthetic_rospkg/script/result.png'
         img = I.open(img_path)
 
         img = np.asarray(img)
@@ -58,4 +58,4 @@ class Blenderproc_tests():
 
 
 if __name__ == '__main__':
-    Blenderproc_tests()
+    Synthetic_rospkg()
