@@ -1,1 +1,1 @@
-# Blenderproc tests
+# Synthetic generator tests
