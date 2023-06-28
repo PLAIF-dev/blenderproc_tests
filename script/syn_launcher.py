@@ -8,6 +8,7 @@ from PIL import Image as I
 from sensor_msgs.msg import Image
 import numpy as np
 from std_msgs.msg import Header
+import time
 
 def rgb_to_msg(img):
     # Create a ROS1 Image message
@@ -32,12 +33,20 @@ class Synthetic_rospkg():
     def __init__(self):
         rospy.init_node('Synthetic_rospkg_node')
         rospy.Subscriber('create_new_image', String, self.callback_create)
+        rospy.Subscriber('generate_image', String, self.callback_generate_image)
         rospy.loginfo('[Synthetic_rospkg_node] started')
         try:
             rospy.spin()
         except:
             rospy.signal_shutdown('Synthetic_rospkg_node is shutdown')
 
+    def callback_generate_image(self, msg):
+        rospy.loginfo('[Synthetic_rospkg_node] callback_generate_image called')
+        for i in range(5):
+            pb = rospy.Publisher('image_generated', String, queue_size=1)
+            msg = 'image is generating..' + str(i)
+            pb.publish(msg)
+            time.sleep(1)
 
     def callback_create(self, msg):
         rospy.loginfo('[Synthetic_rospkg_node] callback_create called')
@@ -58,4 +67,5 @@ class Synthetic_rospkg():
 
 
 if __name__ == '__main__':
+    print('1111 synthetic_rospkg started')
     Synthetic_rospkg()
