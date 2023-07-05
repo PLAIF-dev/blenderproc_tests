@@ -44,7 +44,7 @@ class Synthetic_rospkg():
     def callback_generate_image(self, msg):
         rospy.Publisher('generate_status', String, queue_size=1).publish('in progress')
         rospy.loginfo('[Synthetic_rospkg_node] callback_generate_image called')
-        count = 10
+        count = 5 if msg.data is "" else int(msg.data)
         project_folder_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name()) 
         object_folder_path = project_folder_path + '/Object'
         result_folder_path = project_folder_path + '/Result'
@@ -66,7 +66,7 @@ class Synthetic_rospkg():
             pb = rospy.Publisher('learn_progress', String, queue_size=1)
             pb.publish(str((i+1)*20))
             time.sleep(1)
-            
+
         # create dummy model file
         dummy_file_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name() + "/weight_file")
         self.create_folder_recursive(dummy_file_path)
