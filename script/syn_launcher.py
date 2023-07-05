@@ -44,11 +44,13 @@ class Synthetic_rospkg():
 
     def callback_generate_image(self, msg):
         rospy.loginfo('[Synthetic_rospkg_node] callback_generate_image called')
-        for i in range(5):
-            pb = rospy.Publisher('image_generated', String, queue_size=1)
-            msg = 'image is generating..' + str(i)
-            pb.publish(msg)
-            time.sleep(1)
+        count = 50
+        dummy_file_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name() + '/Object')
+        print(dummy_file_path)
+        for i in range(count):
+            print('#{i} : cmd')
+            cmd = "blenderproc run syn..../wait_capture.py " + dummy_file_path
+            returned_value = os.system(cmd)  # returns the exit code in unix
 
     def callback_create_new_image(self, msg):
         rospy.loginfo('[Synthetic_rospkg_node] callback_create_new_image called')
