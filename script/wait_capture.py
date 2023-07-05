@@ -78,7 +78,4 @@ class Wait_capture():
 
 if __name__ == '__main__':
     object_folder_path = sys.argv[1]
-    object_folder_path = sys.argv[2]
-    object_folder_path = sys.argv[3]
-    object_folder_path = sys.argv[4]
     Wait_capture(object_folder_path)

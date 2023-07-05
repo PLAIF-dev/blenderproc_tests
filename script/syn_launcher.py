@@ -34,7 +34,6 @@ class Synthetic_rospkg():
     def __init__(self):
         rospy.init_node('Synthetic_rospkg_node')
         rospy.loginfo('[Synthetic_rospkg_node] started')
-        rospy.Subscriber('create_new_image', String, self.callback_create_new_image)
         rospy.Subscriber('generate_image', String, self.callback_generate_image)
         rospy.Subscriber('start_learn', String, self.callback_start_learn)
         try:
@@ -43,21 +42,19 @@ class Synthetic_rospkg():
             rospy.signal_shutdown('Synthetic_rospkg_node is shutdown')
 
     def callback_generate_image(self, msg):
+        rospy.Publisher('generate_status', String, queue_size=1).publish('in progress')
         rospy.loginfo('[Synthetic_rospkg_node] callback_generate_image called')
-        count = 50
-        dummy_file_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name() + '/Object')
-        print(dummy_file_path)
+        count = 5
+        object_folder_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name() + '/Object')
+        print(object_folder_path)
         for i in range(count):
-            print('#{i} : cmd')
-            cmd = "blenderproc run syn..../wait_capture.py " + dummy_file_path
+            current_progress_str = "{}/{}".format(i+1, count)
+            pb = rospy.Publisher('generate_progress', String, queue_size=1)
+            pb.publish(current_progress_str)
+            rospy.loginfo('#{} : cmd'.format(i))
+            cmd = "blenderproc run /home/plaif/catkin_ws/src/synthetic_rospkg/script/wait_capture.py " + object_folder_path
             returned_value = os.system(cmd)  # returns the exit code in unix
-
-    def callback_create_new_image(self, msg):
-        rospy.loginfo('[Synthetic_rospkg_node] callback_create_new_image called')
-        cmd = "blenderproc run /home/yhpark/catkin_ws/src/synthetic_rospkg/script/wait_capture.py"
-        returned_value = os.system(cmd)  # returns the exit code in unix
-        print('returned value:', returned_value)
-        self.send_image()
+        rospy.Publisher('generate_status', String, queue_size=1).publish('finished')
 
     def callback_start_learn(self, msg):
         rospy.Publisher('learn_status', String, queue_size=1).publish('in progress')
