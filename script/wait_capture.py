@@ -8,10 +8,10 @@ import sys
 import datetime
 
 class Wait_capture():
-    def __init__(self, object_folder_path):
-        self.generate_images(object_folder_path)
+    def __init__(self, object_folder_path, result_folder_path):
+        self.generate_images(object_folder_path, result_folder_path)
 
-    def generate_images(self, object_folder_path):
+    def generate_images(self, object_folder_path, result_folder_path):
         bproc.init()
         self.set_light(self.get_light())
 
@@ -34,7 +34,7 @@ class Wait_capture():
         # save or send
         current_datetime = datetime.datetime.now()
         formatted_datetime = current_datetime.strftime("%Y%m%d_%H%M%S")
-        result_file = f"/home/plaif/SyntheticGenerator/TEST3/Result/result_{formatted_datetime}.png"
+        result_file = result_folder_path + "/result_{}.png".format(formatted_datetime)
 
         cv2.imwrite(result_file,color)
         bproc.utility.reset_keyframes()
@@ -78,4 +78,5 @@ class Wait_capture():
 
 if __name__ == '__main__':
     object_folder_path = sys.argv[1]
-    Wait_capture(object_folder_path)
+    result_folder_path = sys.argv[2]
+    Wait_capture(object_folder_path, result_folder_path)

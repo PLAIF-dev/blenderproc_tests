@@ -44,15 +44,18 @@ class Synthetic_rospkg():
     def callback_generate_image(self, msg):
         rospy.Publisher('generate_status', String, queue_size=1).publish('in progress')
         rospy.loginfo('[Synthetic_rospkg_node] callback_generate_image called')
-        count = 5
-        object_folder_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name() + '/Object')
-        print(object_folder_path)
+        count = 10
+        project_folder_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name()) 
+        object_folder_path = project_folder_path + '/Object'
+        result_folder_path = project_folder_path + '/Result'
         for i in range(count):
             current_progress_str = "{}/{}".format(i+1, count)
             pb = rospy.Publisher('generate_progress', String, queue_size=1)
             pb.publish(current_progress_str)
             rospy.loginfo('#{} : cmd'.format(i))
-            cmd = "blenderproc run /home/plaif/catkin_ws/src/synthetic_rospkg/script/wait_capture.py " + object_folder_path
+            entry_file = "/home/plaif/catkin_ws/src/synthetic_rospkg/script/wait_capture.py"
+            cmd = "blenderproc run {} {} {}".format(
+                entry_file, object_folder_path, result_folder_path)
             returned_value = os.system(cmd)  # returns the exit code in unix
         rospy.Publisher('generate_status', String, queue_size=1).publish('finished')
 
@@ -63,6 +66,7 @@ class Synthetic_rospkg():
             pb = rospy.Publisher('learn_progress', String, queue_size=1)
             pb.publish(str((i+1)*20))
             time.sleep(1)
+            
         # create dummy model file
         dummy_file_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name() + "/weight_file")
         self.create_folder_recursive(dummy_file_path)
