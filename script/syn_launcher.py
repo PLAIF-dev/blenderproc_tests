@@ -34,7 +34,6 @@ class Synthetic_rospkg():
     def __init__(self):
         rospy.init_node('Synthetic_rospkg_node')
         rospy.loginfo('[Synthetic_rospkg_node] started')
-        rospy.Subscriber('create_new_image', String, self.callback_create_new_image)
         rospy.Subscriber('generate_image', String, self.callback_generate_image)
         rospy.Subscriber('start_learn', String, self.callback_start_learn)
         try:
@@ -43,19 +42,22 @@ class Synthetic_rospkg():
             rospy.signal_shutdown('Synthetic_rospkg_node is shutdown')
 
     def callback_generate_image(self, msg):
+        rospy.Publisher('generate_status', String, queue_size=1).publish('in progress')
         rospy.loginfo('[Synthetic_rospkg_node] callback_generate_image called')
-        for i in range(5):
-            pb = rospy.Publisher('image_generated', String, queue_size=1)
-            msg = 'image is generating..' + str(i)
-            pb.publish(msg)
-            time.sleep(1)
-
-    def callback_create_new_image(self, msg):
-        rospy.loginfo('[Synthetic_rospkg_node] callback_create_new_image called')
-        cmd = "blenderproc run /home/yhpark/catkin_ws/src/synthetic_rospkg/script/wait_capture.py"
-        returned_value = os.system(cmd)  # returns the exit code in unix
-        print('returned value:', returned_value)
-        self.send_image()
+        count = 5 if msg.data is "" else int(msg.data)
+        project_folder_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name()) 
+        object_folder_path = project_folder_path + '/Object'
+        result_folder_path = project_folder_path + '/Result'
+        for i in range(count):
+            current_progress_str = "{}/{}".format(i+1, count)
+            pb = rospy.Publisher('generate_progress', String, queue_size=1)
+            pb.publish(current_progress_str)
+            rospy.loginfo('#{} : cmd'.format(i))
+            entry_file = "/home/plaif/catkin_ws/src/synthetic_rospkg/script/wait_capture.py"
+            cmd = "blenderproc run {} {} {}".format(
+                entry_file, object_folder_path, result_folder_path)
+            returned_value = os.system(cmd)  # returns the exit code in unix
+        rospy.Publisher('generate_status', String, queue_size=1).publish('finished')
 
     def callback_start_learn(self, msg):
         rospy.Publisher('learn_status', String, queue_size=1).publish('in progress')
@@ -64,6 +66,7 @@ class Synthetic_rospkg():
             pb = rospy.Publisher('learn_progress', String, queue_size=1)
             pb.publish(str((i+1)*20))
             time.sleep(1)
+
         # create dummy model file
         dummy_file_path = os.path.expanduser('~/SyntheticGenerator/' + self.get_current_project_name() + "/weight_file")
         self.create_folder_recursive(dummy_file_path)
