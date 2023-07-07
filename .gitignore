@@ -1,1 +1,38 @@
-script/.syn_launcher.py.swp
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Python
+**/__pycache__
+**/__pypackages__
+**/.cache
+**/.pybuilder
+**/.pytype
+**/target
+**/cython_debug
+**/pip-log.txt
+**/pip-delete-this-directory.txt
+
+# Temporary Files
+*.diff
+*.err
+*.log
+*.orig
+*.rej
+*.swo
+*.swp
+*.vi
+
+# Compressed Files
+*.zip
+*.rar
+*.gzip
+*.deb
+*.7z
+*.tar.gz
+*.xz
+*.alz
