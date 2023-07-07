@@ -53,7 +53,7 @@ class Synthetic_rospkg():
             pb = rospy.Publisher('generate_progress', String, queue_size=1)
             pb.publish(current_progress_str)
             rospy.loginfo('#{} : cmd'.format(i))
-            entry_file = "/home/plaif/catkin_ws/src/synthetic_rospkg/script/wait_capture.py"
+            entry_file = os.path.expanduser('~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py')
             cmd = "blenderproc run {} {} {}".format(
                 entry_file, object_folder_path, result_folder_path)
             returned_value = os.system(cmd)  # returns the exit code in unix
@@ -74,14 +74,6 @@ class Synthetic_rospkg():
             file.write('this is a dummy weight file :)')
         rospy.Publisher('learn_status', String, queue_size=1).publish('finished')
         rospy.loginfo('[Synthetic_rospkg_node] model file is created successfully')
-
-    def send_image(self):
-        img_path = '/home/yhpark/catkin_ws/src/synthetic_rospkg/script/result.png'
-        img = I.open(img_path)
-        img = np.asarray(img)
-        img_msg = rgb_to_msg(img)
-        img_publisher = rospy.Publisher('new_image_topic', Image, queue_size=1)
-        img_publisher.publish(img_msg)
 
     def get_current_project_name(self):
         config_file = os.path.expanduser('~/SyntheticGenerator/SG_Config.json')
