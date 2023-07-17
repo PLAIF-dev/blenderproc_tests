@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.x"]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -21,3 +21,11 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
+
+    - name: Fail if Pylint errors exist
+      run: |
+        pylint_result=$(pylint $(git ls-files '*.py'))
+        if echo "$pylint_result" | grep -q "Your condition for detecting Pylint errors"; then
+          echo "::error::Pylint errors found. Please fix the issues before merging."
+          exit 1
+        fi
