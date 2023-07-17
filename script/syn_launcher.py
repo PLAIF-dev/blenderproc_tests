@@ -44,7 +44,7 @@ class SyntheticRospkg:
 
         rospy.Publisher("generate_status", String, queue_size=1).publish("in progress")
         rospy.loginfo("[Synthetic_rospkg_node] callback_generate_image called")
-        count = 5 if msg.data is "" else int(msg.data)
+        count = 5 if msg.data == "" else int(msg.data)
         project_folder_path = os.path.expanduser(
             "~/SyntheticGenerator/" + self.get_current_project_name()
         )
