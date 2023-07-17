@@ -1,0 +1,6 @@
+[TYPECHECK]
+# 비활성화할 경고를 지정합니다.
+disable = 
+    E0401, # Unable to import 'rospy' : for ROS modules
+    W0611, # Unused import sensor_msgs
+    C0412, # Imports from package std_msgs are not grouped
