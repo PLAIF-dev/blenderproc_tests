@@ -34,6 +34,7 @@ class SyntheticRospkg:
     '''main node of synthetic generator'''
 
     def __init__(self):
+        self.is_generating = False
         rospy.init_node("Synthetic_rospkg_node")
         rospy.loginfo("[Synthetic_rospkg_node] started")
         rospy.Subscriber("generate_image", String, self.callback_generate_image)
@@ -45,7 +46,12 @@ class SyntheticRospkg:
 
         rospy.Publisher("generate_status", String, queue_size=1).publish("in progress")
         rospy.loginfo("[Synthetic_rospkg_node] callback_generate_image called")
-        count = 5 if msg.data == "" else int(msg.data)
+        
+        split_values = msg.data.split(" ") # "100 20" -> "100" & "20"
+        set_count = int(split_values[0])
+        iteration_count = int(split_values[1])
+        total_count = set_count * iteration_count
+
         project_folder_path = os.path.expanduser(
             "~/SyntheticGenerator/" + self.get_current_project_name()
         )
@@ -53,19 +59,47 @@ class SyntheticRospkg:
         result_folder_path = project_folder_path + "/Result"
 
         # run check_image_generation as a thread
-        checker_thread = threading.Thread(target=self.check_image_generation)
+        self.is_generating = True
+        checker_thread = threading.Thread(
+            target=self.check_image_generation, args=(result_folder_path, set_count, total_count))
         checker_thread.start()
 
-        for i in range(count):
-            current_progress_str = f"{i+1}/{count}"
+        for i in range(iteration_count):
+            current_progress_str = "{}/{}".format(i+1, iteration_count)
             _pb = rospy.Publisher("generate_progress", String, queue_size=1)
             _pb.publish(current_progress_str)
-            rospy.loginfo(f"#{i} : cmd")
+            rospy.loginfo("#{} : cmd".format(i))
+            rospy.Publisher("generate_status", String, queue_size=1).publish("loading")
             entry_file = os.path.expanduser(
                 "~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py")
-            cmd = f"blenderproc run {entry_file} {object_folder_path} {result_folder_path}"
+            cmd = "blenderproc run {} {} {} {}".format(
+                entry_file, object_folder_path, result_folder_path, set_count)
             os.system(cmd)  # returns the exit code in unix
+
         rospy.Publisher("generate_status", String, queue_size=1).publish("finished")
+        self.is_generating = False
+
+    def check_image_generation(self, path, set_count, total_count):
+        '''periodically check image generating progress and notify'''
+        interval_second = 1
+        file_count_prev = self.get_file_count(path)
+        generated_count_prev = 0
+        while self.is_generating is True:
+            time.sleep(interval_second)
+            
+            rospy.loginfo("[Synthetic_rospkg_node] check_image_generation...")
+            generated_count = self.get_file_count(path) - file_count_prev
+            _is_updated = generated_count == generated_count_prev
+            if _is_updated: continue
+
+            _is_finished = total_count == generated_count
+            if _is_finished: break 
+
+            if generated_count % set_count == 1:
+                rospy.Publisher("generate_status", String, queue_size=1).publish("generating")
+
+            _pb = rospy.Publisher("generate_rate", String, queue_size=1)
+            _pb.publish("{}/{}".format(generated_count, total_count))
 
     def callback_start_learn(self, msg):
         '''callback of topic [start_learn]'''
@@ -103,13 +137,6 @@ class SyntheticRospkg:
         if not os.path.exists(path):
             os.makedirs(path)
 
-    def check_image_generation(self, path, count):
-        '''periodically check image generating progress and notify'''
-        interval_second = 1
-        file_count_prev = self.get_file_count(path)
-        while count == (self.get_file_count(path) - file_count_prev):
-            time.sleep(interval_second)
-
     def get_file_count(self, folder_path):
         ''' get file count in path '''
         try:
@@ -117,9 +144,8 @@ class SyntheticRospkg:
             file_count = len(file_list)
             return file_count
         except OSError as _e:
-            print(f"Error while getting file count: {_e}")
+            print("Error while getting file count: {}".format(_e))
             return 0
-
 
 if __name__ == "__main__":
     SyntheticRospkg()
