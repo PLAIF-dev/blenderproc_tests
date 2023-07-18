@@ -39,6 +39,7 @@ class SyntheticRospkg:
         rospy.loginfo("[Synthetic_rospkg_node] started")
         rospy.Subscriber("generate_image", String, self.callback_generate_image)
         rospy.Subscriber("start_learn", String, self.callback_start_learn)
+        #rospy.Subscriber("break_generate", String, self.callback_break_)
         rospy.spin()
 
     def callback_generate_image(self, msg):
@@ -58,10 +59,13 @@ class SyntheticRospkg:
         object_folder_path = project_folder_path + "/Object"
         result_folder_path = project_folder_path + "/Result"
 
+        # temporarily clear result folder
+        os.system("rm -rf {}".format(result_folder_path))
+
         # run check_image_generation as a thread
         self.is_generating = True
         checker_thread = threading.Thread(
-            target=self.check_image_generation, args=(result_folder_path, set_count, total_count))
+            target=self.check_image_generation, args=(result_folder_path+"/color", set_count, total_count))
         checker_thread.start()
 
         for i in range(iteration_count):
@@ -83,23 +87,22 @@ class SyntheticRospkg:
         '''periodically check image generating progress and notify'''
         interval_second = 1
         file_count_prev = self.get_file_count(path)
+        print("file_count_prev : ", file_count_prev)
         generated_count_prev = 0
         while self.is_generating is True:
             time.sleep(interval_second)
             
-            rospy.loginfo("[Synthetic_rospkg_node] check_image_generation...")
             generated_count = self.get_file_count(path) - file_count_prev
-            _is_updated = generated_count == generated_count_prev
-            if _is_updated: continue
+            _is_updated = generated_count > generated_count_prev
+            if _is_updated is False: continue
 
             _is_finished = total_count == generated_count
             if _is_finished: break 
 
-            if generated_count % set_count == 1:
-                rospy.Publisher("generate_status", String, queue_size=1).publish("generating")
-
-            _pb = rospy.Publisher("generate_rate", String, queue_size=1)
-            _pb.publish("{}/{}".format(generated_count, total_count))
+            rospy.Publisher("generate_status", String, queue_size=1).publish("generating")
+            rospy.Publisher("generate_rate", String, queue_size=1).publish(
+                "{}/{}".format(generated_count, total_count))
+            generated_count_prev = generated_count
 
     def callback_start_learn(self, msg):
         '''callback of topic [start_learn]'''
@@ -115,7 +118,7 @@ class SyntheticRospkg:
         dummy_file_path = os.path.expanduser(
             "~/SyntheticGenerator/" + self.get_current_project_name() + "/weight_file")
         self.create_folder_recursive(dummy_file_path)
-        with open(dummy_file_path + "/weight.pth", "w", encoding="utf-8") as file:
+        with open(dummy_file_path + "/weight.pth", "w") as file:
             file.write("this is a dummy weight file :)")
         rospy.Publisher("learn_status", String, queue_size=1).publish("finished")
         rospy.loginfo("[Synthetic_rospkg_node] model file is created successfully")
@@ -128,7 +131,7 @@ class SyntheticRospkg:
                 "[Synthetic_rospkg_node] error occurred in get_current_project_name"
             )
             return ""
-        with open(config_file, "r", encoding="utf-8") as file:
+        with open(config_file, "r") as file:
             json_data = json.load(file)
             return json_data.get("current_project", "")
 
