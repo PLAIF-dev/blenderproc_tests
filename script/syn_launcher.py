@@ -47,7 +47,7 @@ class SyntheticRospkg:
 
         rospy.Publisher("generate_status", String, queue_size=1).publish("in progress")
         rospy.loginfo("[Synthetic_rospkg_node] callback_generate_image called")
-        
+
         split_values = msg.data.split(" ") # "100 20" -> "100" & "20"
         set_count = int(split_values[0])
         iteration_count = int(split_values[1])
@@ -65,7 +65,8 @@ class SyntheticRospkg:
         # run check_image_generation as a thread
         self.is_generating = True
         checker_thread = threading.Thread(
-            target=self.check_image_generation, args=(result_folder_path+"/color", set_count, total_count))
+            target=self.check_image_generation,
+            args=(result_folder_path+"/color", total_count))
         checker_thread.start()
 
         for i in range(iteration_count):
@@ -83,7 +84,7 @@ class SyntheticRospkg:
         rospy.Publisher("generate_status", String, queue_size=1).publish("finished")
         self.is_generating = False
 
-    def check_image_generation(self, path, set_count, total_count):
+    def check_image_generation(self, path, total_count):
         '''periodically check image generating progress and notify'''
         interval_second = 1
         file_count_prev = self.get_file_count(path)
@@ -91,13 +92,15 @@ class SyntheticRospkg:
         generated_count_prev = 0
         while self.is_generating is True:
             time.sleep(interval_second)
-            
+
             generated_count = self.get_file_count(path) - file_count_prev
             _is_updated = generated_count > generated_count_prev
-            if _is_updated is False: continue
+            if _is_updated is False:
+                continue
 
             _is_finished = total_count == generated_count
-            if _is_finished: break 
+            if _is_finished:
+                break
 
             rospy.Publisher("generate_status", String, queue_size=1).publish("generating")
             rospy.Publisher("generate_rate", String, queue_size=1).publish(

@@ -4,3 +4,5 @@ disable =
     E0401, # Unable to import 'rospy' : for ROS modules
     W0611, # Unused import sensor_msgs
     C0412, # Imports from package std_msgs are not grouped
+    C0209, # Formatting a regular string which could be a f-string
+    W1514, # Using open without explicitly specifying an encoding
