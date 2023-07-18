@@ -4,6 +4,7 @@
 import os
 import time
 import json
+import threading
 import rospy
 from std_msgs.msg import String
 import sensor_msgs
@@ -50,14 +51,18 @@ class SyntheticRospkg:
         )
         object_folder_path = project_folder_path + "/Object"
         result_folder_path = project_folder_path + "/Result"
+
+        # run check_image_generation as a thread
+        checker_thread = threading.Thread(target=self.check_image_generation)
+        checker_thread.start()
+
         for i in range(count):
             current_progress_str = f"{i+1}/{count}"
             _pb = rospy.Publisher("generate_progress", String, queue_size=1)
             _pb.publish(current_progress_str)
             rospy.loginfo(f"#{i} : cmd")
             entry_file = os.path.expanduser(
-                "~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py"
-            )
+                "~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py")
             cmd = f"blenderproc run {entry_file} {object_folder_path} {result_folder_path}"
             os.system(cmd)  # returns the exit code in unix
         rospy.Publisher("generate_status", String, queue_size=1).publish("finished")
@@ -74,8 +79,7 @@ class SyntheticRospkg:
 
         # create dummy model file
         dummy_file_path = os.path.expanduser(
-            "~/SyntheticGenerator/" + self.get_current_project_name() + "/weight_file"
-        )
+            "~/SyntheticGenerator/" + self.get_current_project_name() + "/weight_file")
         self.create_folder_recursive(dummy_file_path)
         with open(dummy_file_path + "/weight.pth", "w", encoding="utf-8") as file:
             file.write("this is a dummy weight file :)")
@@ -98,6 +102,23 @@ class SyntheticRospkg:
         '''callback of topic [generate_image]'''
         if not os.path.exists(path):
             os.makedirs(path)
+
+    def check_image_generation(self, path, count):
+        '''periodically check image generating progress and notify'''
+        interval_second = 1
+        file_count_prev = self.get_file_count(path)
+        while count == (self.get_file_count(path) - file_count_prev):
+            time.sleep(interval_second)
+
+    def get_file_count(self, folder_path):
+        ''' get file count in path '''
+        try:
+            file_list = os.listdir(folder_path)
+            file_count = len(file_list)
+            return file_count
+        except OSError as _e:
+            print(f"Error while getting file count: {_e}")
+            return 0
 
 
 if __name__ == "__main__":
