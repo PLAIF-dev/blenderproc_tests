@@ -31,8 +31,8 @@ class WaitCapture():
         # save or send
         current_datetime = datetime.datetime.now()
         formatted_datetime = current_datetime.strftime("%Y%m%d_%H%M%S")
-        result_file = result_folder_path + f"/result_{formatted_datetime}.png"
-        print(f"[Wait_capture] Result image is generated at [{result_file}]")
+        result_file = result_folder_path + "/result_{}.png".format(formatted_datetime)
+        print("[Wait_capture] Result image is generated at [{}]".format(result_file))
 
         cv2.imwrite(result_file,color)
         bproc.utility.reset_keyframes()
