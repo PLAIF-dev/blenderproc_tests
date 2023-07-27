@@ -95,7 +95,8 @@ class SyntheticRospkg:
         while self.is_generating is True:
             time.sleep(interval_second)
 
-            if not self.subprocess_blenderproc or self.is_process_running(self.subprocess_blenderproc.pid) is False:
+            if not self.subprocess_blenderproc or \
+                self.is_process_running(self.subprocess_blenderproc.pid) is False:
                 break
 
             generated_count = self.get_file_count(path) - file_count_prev
@@ -115,6 +116,7 @@ class SyntheticRospkg:
 
     def run_blenderproc(self, object_folder_path, result_folder_path, set_count):
         '''run blenderproc'''
+        _set_count = set_count
         blenderproc_filepath = os.path.expanduser(
             "~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py")
         self.subprocess_blenderproc = subprocess.Popen(
