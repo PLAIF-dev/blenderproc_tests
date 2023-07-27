@@ -119,8 +119,7 @@ class SyntheticRospkg:
         blenderproc_filepath = os.path.expanduser(
             "~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py")
         self.subprocess_blenderproc = subprocess.Popen(
-            ["blenderproc", "run", blenderproc_filepath, object_folder_path, result_folder_path,
-             set_count]
+            ["blenderproc", "run", blenderproc_filepath, object_folder_path, result_folder_path]
         )
 
     def callback_start_learn(self, msg):
