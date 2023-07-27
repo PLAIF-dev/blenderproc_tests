@@ -6,13 +6,13 @@ import signal
 import time
 import json
 import threading
+import subprocess
 import rospy
 from std_msgs.msg import String
 import sensor_msgs
 from sensor_msgs.msg import Image
 import numpy as np
 from std_msgs.msg import Header
-import subprocess
 import psutil
 
 def rgb_to_msg(img):
@@ -38,6 +38,7 @@ class SyntheticRospkg:
 
     def __init__(self):
         self.is_generating = False
+        self.subprocess_blenderproc = False
         rospy.init_node("Synthetic_rospkg_node")
         rospy.loginfo("[Synthetic_rospkg_node] started")
         rospy.Subscriber("generate_image", String, self.callback_generate_image)
@@ -95,7 +96,7 @@ class SyntheticRospkg:
         while self.is_generating is True:
             time.sleep(interval_second)
 
-            if (self.is_process_running(self.subprocess_blenderproc.pid) is False):
+            if self.is_process_running(self.subprocess_blenderproc.pid) is False:
                 break
 
             generated_count = self.get_file_count(path) - file_count_prev
@@ -118,7 +119,8 @@ class SyntheticRospkg:
         blenderproc_filepath = os.path.expanduser(
             "~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py")
         self.subprocess_blenderproc = subprocess.Popen(
-            ["blenderproc", "run", blenderproc_filepath, object_folder_path, result_folder_path]
+            ["blenderproc", "run", blenderproc_filepath, object_folder_path, result_folder_path,
+             set_count]
         )
 
     def callback_start_learn(self, msg):
@@ -166,14 +168,16 @@ class SyntheticRospkg:
         except OSError as _e:
             print("Error while getting file count: {}".format(_e))
             return 0
-        
+
     def callback_break_generate(self, msg):
         '''terminate subprocess if recieved external signal'''
+        _msg = msg
         rospy.loginfo("[Synthetic_rospkg_node] callback_break_generate called")
-        os.kill(self.subprocess_blenderproc.pid, signal.SIGTERM) #or signal.SIGKILL  
+        os.kill(self.subprocess_blenderproc.pid, signal.SIGTERM) #or signal.SIGKILL
         self.is_generating = False
 
     def is_process_running(self, pid):
+        ''' check the process is currently running '''
         try:
             process = psutil.Process(pid)
             return process.is_running()
