@@ -172,7 +172,7 @@ class SyntheticRospkg:
         '''terminate subprocess if recieved external signal'''
         _msg = msg
         rospy.loginfo("[Synthetic_rospkg_node] callback_break_generate called")
-        if not self.subprocess_blenderproc:
+        if self.subprocess_blenderproc:
             os.kill(self.subprocess_blenderproc.pid, signal.SIGTERM) #or signal.SIGKILL
         self.is_generating = False
 
