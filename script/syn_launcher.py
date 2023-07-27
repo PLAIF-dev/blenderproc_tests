@@ -2,6 +2,7 @@
 '''synthetic launcher docstr'''
 
 import os
+import signal
 import time
 import json
 import threading
@@ -11,6 +12,8 @@ import sensor_msgs
 from sensor_msgs.msg import Image
 import numpy as np
 from std_msgs.msg import Header
+import subprocess
+import psutil
 
 def rgb_to_msg(img):
     '''convert rgb image to msg'''
@@ -39,7 +42,7 @@ class SyntheticRospkg:
         rospy.loginfo("[Synthetic_rospkg_node] started")
         rospy.Subscriber("generate_image", String, self.callback_generate_image)
         rospy.Subscriber("start_learn", String, self.callback_start_learn)
-        #rospy.Subscriber("break_generate", String, self.callback_break_)
+        rospy.Subscriber("break_generate", String, self.callback_break_generate)
         rospy.spin()
 
     def callback_generate_image(self, msg):
@@ -70,28 +73,30 @@ class SyntheticRospkg:
         checker_thread.start()
 
         for i in range(iteration_count):
-            current_progress_str = "{}/{}".format(i+1, iteration_count)
-            _pb = rospy.Publisher("generate_progress", String, queue_size=1)
-            _pb.publish(current_progress_str)
-            rospy.loginfo("#{} : cmd".format(i))
+            if self.is_generating is False:
+                rospy.loginfo("[Synthetic_rospkg_node] is_generating is false in for loop")
+                break
+            rospy.Publisher("generate_progress", String, queue_size=1).publish(
+                "{}/{}".format(i+1, iteration_count))
             rospy.Publisher("generate_status", String, queue_size=1).publish("loading")
-            entry_file = os.path.expanduser(
-                "~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py")
-            cmd = "blenderproc run {} {} {} {}".format(
-                entry_file, object_folder_path, result_folder_path, set_count)
-            os.system(cmd)  # returns the exit code in unix
+            self.run_blenderproc(object_folder_path, result_folder_path, set_count)
+            self.subprocess_blenderproc.wait()
 
-        rospy.Publisher("generate_status", String, queue_size=1).publish("finished")
+        checker_thread.join()
         self.is_generating = False
+        rospy.Publisher("generate_status", String, queue_size=1).publish("finished")
+        rospy.loginfo("[Synthetic_rospkg_node] callback_generate_image finished")
 
     def check_image_generation(self, path, total_count):
         '''periodically check image generating progress and notify'''
         interval_second = 1
         file_count_prev = self.get_file_count(path)
-        print("file_count_prev : ", file_count_prev)
         generated_count_prev = 0
         while self.is_generating is True:
             time.sleep(interval_second)
+
+            if (self.is_process_running(self.subprocess_blenderproc.pid) is False):
+                break
 
             generated_count = self.get_file_count(path) - file_count_prev
             _is_updated = generated_count > generated_count_prev
@@ -106,6 +111,15 @@ class SyntheticRospkg:
             rospy.Publisher("generate_rate", String, queue_size=1).publish(
                 "{}/{}".format(generated_count, total_count))
             generated_count_prev = generated_count
+        rospy.loginfo("[Synthetic_rospkg_node] check_image_generation finished")
+
+    def run_blenderproc(self, object_folder_path, result_folder_path, set_count):
+        '''run blenderproc'''
+        blenderproc_filepath = os.path.expanduser(
+            "~/catkin_ws/src/synthetic_rospkg/vs_synthetic_generator/generate_synthetic.py")
+        self.subprocess_blenderproc = subprocess.Popen(
+            ["blenderproc", "run", blenderproc_filepath, object_folder_path, result_folder_path]
+        )
 
     def callback_start_learn(self, msg):
         '''callback of topic [start_learn]'''
@@ -127,7 +141,7 @@ class SyntheticRospkg:
         rospy.loginfo("[Synthetic_rospkg_node] model file is created successfully")
 
     def get_current_project_name(self):
-        '''callback of topic [generate_image]'''
+        '''Get the current project name from SG_Config.json'''
         config_file = os.path.expanduser("~/SyntheticGenerator/SG_Config.json")
         if not os.path.exists(config_file):
             rospy.loginfo(
@@ -139,7 +153,7 @@ class SyntheticRospkg:
             return json_data.get("current_project", "")
 
     def create_folder_recursive(self, path):
-        '''callback of topic [generate_image]'''
+        '''Create folders recursively'''
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -152,6 +166,20 @@ class SyntheticRospkg:
         except OSError as _e:
             print("Error while getting file count: {}".format(_e))
             return 0
+        
+    def callback_break_generate(self, msg):
+        '''terminate subprocess if recieved external signal'''
+        rospy.loginfo("[Synthetic_rospkg_node] callback_break_generate called")
+        os.kill(self.subprocess_blenderproc.pid, signal.SIGTERM) #or signal.SIGKILL  
+        self.is_generating = False
+
+    def is_process_running(self, pid):
+        try:
+            process = psutil.Process(pid)
+            return process.is_running()
+        except psutil.NoSuchProcess:
+            return False
 
 if __name__ == "__main__":
+    print('syn_launcher pid : ', os.getpid())
     SyntheticRospkg()
