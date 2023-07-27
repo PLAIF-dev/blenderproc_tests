@@ -38,7 +38,7 @@ class SyntheticRospkg:
 
     def __init__(self):
         self.is_generating = False
-        self.subprocess_blenderproc = False
+        self.subprocess_blenderproc = None
         rospy.init_node("Synthetic_rospkg_node")
         rospy.loginfo("[Synthetic_rospkg_node] started")
         rospy.Subscriber("generate_image", String, self.callback_generate_image)
@@ -81,7 +81,6 @@ class SyntheticRospkg:
                 "{}/{}".format(i+1, iteration_count))
             rospy.Publisher("generate_status", String, queue_size=1).publish("loading")
             self.run_blenderproc(object_folder_path, result_folder_path, set_count)
-            self.subprocess_blenderproc.wait()
 
         checker_thread.join()
         self.is_generating = False
@@ -96,7 +95,7 @@ class SyntheticRospkg:
         while self.is_generating is True:
             time.sleep(interval_second)
 
-            if self.is_process_running(self.subprocess_blenderproc.pid) is False:
+            if not self.subprocess_blenderproc or self.is_process_running(self.subprocess_blenderproc.pid) is False:
                 break
 
             generated_count = self.get_file_count(path) - file_count_prev
@@ -121,6 +120,7 @@ class SyntheticRospkg:
         self.subprocess_blenderproc = subprocess.Popen(
             ["blenderproc", "run", blenderproc_filepath, object_folder_path, result_folder_path]
         )
+        self.subprocess_blenderproc.wait()
 
     def callback_start_learn(self, msg):
         '''callback of topic [start_learn]'''
@@ -172,7 +172,8 @@ class SyntheticRospkg:
         '''terminate subprocess if recieved external signal'''
         _msg = msg
         rospy.loginfo("[Synthetic_rospkg_node] callback_break_generate called")
-        os.kill(self.subprocess_blenderproc.pid, signal.SIGTERM) #or signal.SIGKILL
+        if not self.subprocess_blenderproc:
+            os.kill(self.subprocess_blenderproc.pid, signal.SIGTERM) #or signal.SIGKILL
         self.is_generating = False
 
     def is_process_running(self, pid):
