@@ -1,13 +1,13 @@
 '''sample code which generates a simple image'''
 
-import random
-import time
-import sys
 import datetime
+import random
+import sys
+
 import blenderproc as bproc
-import bpy
 import cv2
 import numpy as np
+
 
 class WaitCapture():
     '''wait capture docstr'''
