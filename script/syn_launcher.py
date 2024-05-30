@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 '''synthetic launcher docstr'''
 
+import json
 import os
 import signal
-import time
-import json
-import threading
 import subprocess
-import rospy
-from std_msgs.msg import String
-import sensor_msgs
-from sensor_msgs.msg import Image
-import numpy as np
-from std_msgs.msg import Header
+import threading
+import time
+
 import psutil
+import rospy
+from sensor_msgs.msg import Image
+from std_msgs.msg import Header
+from std_msgs.msg import String
+
 
 def rgb_to_msg(img):
     '''convert rgb image to msg'''
